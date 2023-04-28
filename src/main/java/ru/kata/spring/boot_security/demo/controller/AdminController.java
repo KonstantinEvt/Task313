@@ -3,7 +3,8 @@ package ru.kata.spring.boot_security.demo.controller;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
-import ru.kata.spring.boot_security.demo.model.UserCrud;
+import ru.kata.spring.boot_security.demo.Dto.DtoUser;
+import ru.kata.spring.boot_security.demo.model.User;
 import ru.kata.spring.boot_security.demo.service.RoleService;
 import ru.kata.spring.boot_security.demo.service.UserService;
 
@@ -26,14 +27,14 @@ public class AdminController {
     }
 
     @GetMapping("/add")
-    public String getViewToAddUser(@ModelAttribute("useradd") UserCrud userCrud, ModelMap model) {
+    public String getViewToAddUser(@ModelAttribute("useradd") User user, ModelMap model) {
         model.addAttribute("userRoles", roleService.getListRoles());
         return "userAdd";
     }
 
     @PostMapping("/persist")
-    public String addUser(@ModelAttribute("useradd") UserCrud userCrud) {
-        userService.addUser(userCrud);
+    public String addUser(@ModelAttribute("useradd") DtoUser dtoUser) {
+        userService.addUser(dtoUser);
         return "redirect:/admin";
     }
 
@@ -45,8 +46,8 @@ public class AdminController {
     }
 
     @PatchMapping("/{id}")
-    public String updateUser(@ModelAttribute("updateUser") UserCrud userCrud, @PathVariable("id") Long id) {
-        userService.updateUser(userCrud, id);
+    public String updateUser(@ModelAttribute("updateUser") DtoUser dtoUser, @PathVariable("id") Long id) {
+        userService.updateUser(dtoUser, id);
         return "redirect:/admin";
     }
 

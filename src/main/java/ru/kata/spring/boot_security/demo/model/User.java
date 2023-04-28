@@ -1,18 +1,14 @@
 package ru.kata.spring.boot_security.demo.model;
 
 
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
-
 import javax.persistence.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 
 @Entity
 @Table(name = "users")
-public class UserCrud implements UserDetails {
+public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,26 +25,26 @@ public class UserCrud implements UserDetails {
     private String email;
     @Column(name = "password")
     private String password;
-    @Column(name = "username")
+    @Column(name = "username", unique = true)
     private String username;
 
 
     @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JoinTable(
             name = "User_Role",
-            joinColumns = @JoinColumn(name = "Role_id"),
-            inverseJoinColumns = @JoinColumn(name = "User_Id")
+            joinColumns = @JoinColumn(name = "Role_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "User_Id", referencedColumnName = "id")
     )
-    private List<Role> roles = new ArrayList<>();
+    private Set<Role> roles = new HashSet<>();
 
-    public UserCrud() {
+    public User() {
     }
 
-    public UserCrud(String password, String username, List<Role> roles) {
+    public User(String password, String username, Set<Role> roles) {
         this("firstName", "lastName", "email", username, password, roles);
     }
 
-    public UserCrud(String firstName, String lastName, String email, String username, String password, List<Role> roles) {
+    public User(String firstName, String lastName, String email, String username, String password, Set<Role> roles) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
@@ -89,11 +85,11 @@ public class UserCrud implements UserDetails {
         this.email = email;
     }
 
-    public List<Role> getRoles() {
+    public Set<Role> getRoles() {
         return roles;
     }
 
-    public void setRoles(List<Role> roles) {
+    public void setRoles(Set<Role> roles) {
         this.roles = roles;
     }
 
@@ -101,8 +97,16 @@ public class UserCrud implements UserDetails {
         this.password = password;
     }
 
+    public String getPassword() {
+        return password;
+    }
+
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public String getUsername() {
+        return username;
     }
 
     @Override
@@ -114,7 +118,7 @@ public class UserCrud implements UserDetails {
     public boolean equals(Object obj) {
         if (this == obj) return true;
         if (obj == null || getClass() != obj.getClass()) return false;
-        UserCrud that = (UserCrud) obj;
+        User that = (User) obj;
         return id.equals(that.getId());
     }
 
@@ -126,41 +130,5 @@ public class UserCrud implements UserDetails {
                 ", lastName='" + lastName + '\'' +
                 ", email='" + email + '\'' +
                 ')';
-    }
-
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return getRoles();
-        //.stream().map(k->new SimpleGrantedAuthority(k.getAuthority())).collect(Collectors.toList());
-    }
-
-    @Override
-    public String getPassword() {
-        return this.password;
-    }
-
-    @Override
-    public String getUsername() {
-        return this.username;
-    }
-
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return true;
     }
 }

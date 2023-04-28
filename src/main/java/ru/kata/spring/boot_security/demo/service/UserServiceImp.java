@@ -1,18 +1,20 @@
 package ru.kata.spring.boot_security.demo.service;
 
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.kata.spring.boot_security.demo.Dto.DtoUser;
 import ru.kata.spring.boot_security.demo.dao.RoleDao;
 import ru.kata.spring.boot_security.demo.dao.UserDao;
 import ru.kata.spring.boot_security.demo.model.Role;
-import ru.kata.spring.boot_security.demo.model.UserCrud;
+import ru.kata.spring.boot_security.demo.model.User;
+import ru.kata.spring.boot_security.demo.security.UserSecurityDetails;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class UserServiceImp implements UserService {
@@ -29,20 +31,32 @@ public class UserServiceImp implements UserService {
 
     @Transactional
     @Override
-    public void addUser(UserCrud userCrud) {
-        UserCrud userNew = userDao.findUserByUsername(userCrud.getUsername());
-        if (userNew == null) {
-            userCrud.setPassword(encoder.encode(userCrud.getPassword()));
-            userCrud.setRoles(this.getCheckedRoles(userCrud));
-            userDao.addUser(userCrud);
+    public void addUser(DtoUser dtoUser) {
+        if (userDao.findUserByUsername(dtoUser.getUsername()) == null) {
+            userDao.addUser(convertDtoToEntity(dtoUser));
         } else {
             throw new IllegalArgumentException("This user is already exist");
         }
     }
 
+    private User convertDtoToEntity(DtoUser dtoUser) {
+        User userNew = new User();
+        userNew.setFirstName(dtoUser.getFirstName());
+        userNew.setLastName(dtoUser.getLastName());
+        userNew.setEmail(dtoUser.getEmail());
+        userNew.setUsername(dtoUser.getUsername());
+        Set<Role> userRole = new HashSet<>();
+        for (String role : dtoUser.getRoles()) {
+            userRole.add(roleDao.getRole(Long.parseLong(role)));
+        }
+        userNew.setRoles(userRole);
+        userNew.setPassword(encoder.encode(dtoUser.getPassword()));
+        return userNew;
+    }
+
     @Transactional(readOnly = true)
     @Override
-    public UserCrud getUser(Long id) {
+    public User getUser(Long id) {
         return userDao.getUser(id);
     }
 
@@ -54,41 +68,28 @@ public class UserServiceImp implements UserService {
 
     @Transactional(readOnly = true)
     @Override
-    public List<UserCrud> getListUsers() {
+    public List<User> getListUsers() {
         return userDao.getListUsers();
     }
 
     @Transactional
     @Override
-    public void updateUser(UserCrud userCrud, Long id) {
-        userCrud.setRoles(this.getCheckedRoles(userCrud));
-        userDao.updateUser(userCrud, id);
+    public void updateUser(DtoUser dtoUser, Long id) {
+        userDao.updateUser(convertDtoToEntity(dtoUser), id);
     }
 
     @Transactional(readOnly = true)
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        UserCrud userCrud = userDao.findUserByUsername(username);
-        if (userCrud == null) {
+        if (userDao.findUserByUsername(username) == null) {
             throw new UsernameNotFoundException(String.format("User %s not found", username));
         }
-        return new User(userCrud.getUsername(), userCrud.getPassword(), userCrud.getAuthorities());
+        UserSecurityDetails userSecurityDetails = new UserSecurityDetails(userDao.findUserByUsername(username));
+        return new org.springframework.security.core.userdetails.User(userSecurityDetails.getUsername(), userSecurityDetails.getPassword(), userSecurityDetails.getAuthorities());
     }
 
     @Transactional(readOnly = true)
-    public UserCrud findUserByUsername(String username) {
+    public User findUserByUsername(String username) {
         return userDao.findUserByUsername(username);
-    }
-
-    @Transactional(readOnly = true)
-    public List<Role> getCheckedRoles(UserCrud userCrud) {
-        List<Role> userRole = new ArrayList<>();
-        for (Role role : userCrud.getRoles()) {
-            userRole.add(roleDao.getRoleByName(role.getRole()));
-        }
-        if (userRole.isEmpty()) {
-            userRole.add(roleDao.getRoleByName("ROLE_USER"));
-        }
-        return userRole;
     }
 }
