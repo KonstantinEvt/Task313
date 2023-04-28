@@ -5,9 +5,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.kata.spring.boot_security.demo.Dto.DtoUser;
 import ru.kata.spring.boot_security.demo.dao.RoleDao;
 import ru.kata.spring.boot_security.demo.dao.UserDao;
+import ru.kata.spring.boot_security.demo.dto.DtoUser;
 import ru.kata.spring.boot_security.demo.model.Role;
 import ru.kata.spring.boot_security.demo.model.User;
 import ru.kata.spring.boot_security.demo.security.UserSecurityDetails;
@@ -32,10 +32,11 @@ public class UserServiceImp implements UserService {
     @Transactional
     @Override
     public void addUser(DtoUser dtoUser) {
-        if (userDao.findUserByUsername(dtoUser.getUsername()) == null) {
+        try {
+            userDao.findUserByUsername(dtoUser.getUsername());
+            System.out.println("This user is already exist");
+        } catch (UsernameNotFoundException e) {
             userDao.addUser(convertDtoToEntity(dtoUser));
-        } else {
-            throw new IllegalArgumentException("This user is already exist");
         }
     }
 
@@ -81,11 +82,12 @@ public class UserServiceImp implements UserService {
     @Transactional(readOnly = true)
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        if (userDao.findUserByUsername(username) == null) {
+        try {
+            UserSecurityDetails userSecurityDetails = new UserSecurityDetails(userDao.findUserByUsername(username));
+            return new org.springframework.security.core.userdetails.User(userSecurityDetails.getUsername(), userSecurityDetails.getPassword(), userSecurityDetails.getAuthorities());
+        } catch (Exception e) {
             throw new UsernameNotFoundException(String.format("User %s not found", username));
         }
-        UserSecurityDetails userSecurityDetails = new UserSecurityDetails(userDao.findUserByUsername(username));
-        return new org.springframework.security.core.userdetails.User(userSecurityDetails.getUsername(), userSecurityDetails.getPassword(), userSecurityDetails.getAuthorities());
     }
 
     @Transactional(readOnly = true)

@@ -33,7 +33,7 @@ public class RoleDaoImp implements RoleDao {
         try {
             return entityManager.createQuery("from Role where role=:role", Role.class).setParameter("role", role).getSingleResult();
         } catch (Exception e) {
-            return null;
+            return getRole(2L);
         }
     }
 

@@ -3,7 +3,7 @@ package ru.kata.spring.boot_security.demo.controller;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
-import ru.kata.spring.boot_security.demo.Dto.DtoUser;
+import ru.kata.spring.boot_security.demo.dto.DtoUser;
 import ru.kata.spring.boot_security.demo.model.User;
 import ru.kata.spring.boot_security.demo.service.RoleService;
 import ru.kata.spring.boot_security.demo.service.UserService;
@@ -33,7 +33,7 @@ public class AdminController {
     }
 
     @PostMapping("/persist")
-    public String addUser(@ModelAttribute("useradd") DtoUser dtoUser) {
+    public String addUser(DtoUser dtoUser) {
         userService.addUser(dtoUser);
         return "redirect:/admin";
     }
@@ -46,7 +46,7 @@ public class AdminController {
     }
 
     @PatchMapping("/{id}")
-    public String updateUser(@ModelAttribute("updateUser") DtoUser dtoUser, @PathVariable("id") Long id) {
+    public String updateUser(DtoUser dtoUser, @PathVariable("id") Long id) {
         userService.updateUser(dtoUser, id);
         return "redirect:/admin";
     }

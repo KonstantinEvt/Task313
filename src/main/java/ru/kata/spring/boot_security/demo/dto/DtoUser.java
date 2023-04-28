@@ -1,4 +1,4 @@
-package ru.kata.spring.boot_security.demo.Dto;
+package ru.kata.spring.boot_security.demo.dto;
 
 import java.util.HashSet;
 import java.util.Set;
